@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Photo Upload</title>
+</head>
+<body>
+    <h1>Capture and Upload a Photo</h1>
+
+    <video id="video" width="300" height="250" autoplay></video>
+    <button id="capture">Capture Photo</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="photo" id="photoInput">
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Uploaded Photos</h2>
+    {% for photo in photos %}
+        <img src="{{ url_for('uploaded_file', filename=photo) }}" alt="Uploaded Image" width="300">
+    {% endfor %}
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture');
+        const photoInput = document.getElementById('photoInput');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // Access camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Camera access denied", err);
+            });
+
+        // Capture photo
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert image to Base64 and store it in a hidden input
+            photoInput.value = canvas.toDataURL('image/png');
+        });
+    </script>
+</body>
+</html>
