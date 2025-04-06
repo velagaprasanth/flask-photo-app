@@ -4,20 +4,18 @@ import base64
 
 app = Flask(__name__)
 
-# Folder where uploaded photos will be saved
+# Increase the max request size for Heroku (up to 50MB)
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB limit
+
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20MB limit
 
-
-
-# Ensure the uploads folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 @app.route('/')
 def home():
-    photos = os.listdir(UPLOAD_FOLDER)  # List files in uploads/
+    photos = os.listdir(UPLOAD_FOLDER)
     return render_template('index.html', photos=photos)
 
 @app.route('/upload', methods=['POST'])
@@ -27,8 +25,8 @@ def upload_file():
     if not photo_data:
         return redirect(request.url)
 
-    # Convert Base64 image to binary
-    photo_data = photo_data.replace('data:image/png;base64,', '')
+    # Remove the image header (base64 metadata)
+    photo_data = photo_data.split(",")[1]
     photo_binary = base64.b64decode(photo_data)
 
     filename = f"photo_{len(os.listdir(UPLOAD_FOLDER)) + 1}.png"
@@ -39,7 +37,6 @@ def upload_file():
 
     return redirect(url_for('home'))
 
-# Serve uploaded images
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
